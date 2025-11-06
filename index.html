@@ -323,6 +323,42 @@
             update();
         }
 
+        // Touch controls for mobile
+        let touching = false;
+        
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touching = true;
+            handleTouch(e);
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (touching) {
+                handleTouch(e);
+            }
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touching = false;
+            paddle.dx = 0;
+        });
+        
+        function handleTouch(e) {
+            const rect = canvas.getBoundingClientRect();
+            const touchX = e.touches[0].clientX - rect.left;
+            const targetX = touchX * (canvas.width / rect.width);
+            
+            // Move paddle to touch position
+            const diff = targetX - (paddle.x + paddle.width / 2);
+            if (Math.abs(diff) > 5) {
+                paddle.dx = diff > 0 ? paddle.speed : -paddle.speed;
+            } else {
+                paddle.dx = 0;
+            }
+        }
+
         document.addEventListener('keydown', keyDown);
         document.addEventListener('keyup', keyUp);
 
