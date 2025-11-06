@@ -338,13 +338,16 @@
         }
 
         // Touch controls for mobile
-        canvas.addEventListener('touchstart', handleTouch);
-        canvas.addEventListener('touchmove', handleTouch);
+       document.addEventListener('touchstart', handleTouch, { passive: false });
+document.addEventListener('touchmove', handleTouch, { passive: false });
+
         
         function handleTouch(e) {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const touchX = e.touches[0].clientX - rect.left;
+        const touch = e.touches[0] || e.changedTouches[0];
+const touchX = touch.clientX - rect.left;
+
             const scaleX = canvas.width / rect.width;
             const canvasX = touchX * scaleX;
             
