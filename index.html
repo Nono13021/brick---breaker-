@@ -98,13 +98,23 @@
         };
 
         // Ball
+        function getRandomDirection() {
+            const angle = (Math.random() * 60 + 60) * (Math.PI / 180); // Angle entre 60° et 120°
+            const direction = Math.random() < 0.5 ? 1 : -1; // Gauche ou droite aléatoire
+            return {
+                dx: Math.cos(angle) * 5 * direction,
+                dy: -Math.abs(Math.sin(angle) * 5)
+            };
+        }
+        
+        const initialDirection = getRandomDirection();
         const ball = {
             x: canvas.width / 2,
             y: canvas.height / 2,
             radius: 8,
             speed: 5,
-            dx: 5,
-            dy: -5
+            dx: initialDirection.dx,
+            dy: initialDirection.dy
         };
 
         // Bricks
@@ -315,8 +325,12 @@
             document.getElementById('gameOver').style.display = 'none';
             ball.x = canvas.width / 2;
             ball.y = canvas.height / 2;
-            ball.dx = 5;
-            ball.dy = -5;
+            
+            // Direction aléatoire au restart
+            const newDirection = getRandomDirection();
+            ball.dx = newDirection.dx;
+            ball.dy = newDirection.dy;
+            
             paddle.x = canvas.width / 2 - 60;
             particles = [];
             createBricks();
@@ -324,38 +338,23 @@
         }
 
         // Touch controls for mobile
-        let touching = false;
-        
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            touching = true;
-            handleTouch(e);
-        });
-        
-        canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (touching) {
-                handleTouch(e);
-            }
-        });
-        
-        canvas.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            touching = false;
-            paddle.dx = 0;
-        });
+        canvas.addEventListener('touchstart', handleTouch);
+        canvas.addEventListener('touchmove', handleTouch);
         
         function handleTouch(e) {
+            e.preventDefault();
             const rect = canvas.getBoundingClientRect();
             const touchX = e.touches[0].clientX - rect.left;
-            const targetX = touchX * (canvas.width / rect.width);
+            const scaleX = canvas.width / rect.width;
+            const canvasX = touchX * scaleX;
             
-            // Move paddle to touch position
-            const diff = targetX - (paddle.x + paddle.width / 2);
-            if (Math.abs(diff) > 5) {
-                paddle.dx = diff > 0 ? paddle.speed : -paddle.speed;
-            } else {
-                paddle.dx = 0;
+            // Move paddle directly to touch position
+            paddle.x = canvasX - paddle.width / 2;
+            
+            // Keep paddle within bounds
+            if (paddle.x < 0) paddle.x = 0;
+            if (paddle.x + paddle.width > canvas.width) {
+                paddle.x = canvas.width - paddle.width;
             }
         }
 
