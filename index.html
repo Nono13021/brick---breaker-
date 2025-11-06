@@ -1,371 +1,271 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Casse-Briques Satisfaisant</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-        }
-        #gameContainer {
-            text-align: center;
-        }
-        canvas {
-            border: 4px solid white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            background: #1a1a2e;
-        }
-        #score {
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        #gameOver {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
-            color: white;
-            padding: 40px;
-            border-radius: 20px;
-            display: none;
-            text-align: center;
-        }
-        #gameOver h2 {
-            font-size: 48px;
-            margin-bottom: 20px;
-        }
-        #gameOver button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
-        #gameOver button:hover {
-            transform: scale(1.05);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Casse-Briques Mobile</title>
+
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body,html {
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        height:100vh;
+        background:linear-gradient(135deg,#667eea,#764ba2);
+        font-family:Arial, sans-serif;
+        overflow:hidden;
+        touch-action:none;
+    }
+    #score {
+        position:absolute;
+        top:10px;
+        color:white;
+        font-size:28px;
+        font-weight:bold;
+    }
+    canvas {
+        border:4px solid white;
+        border-radius:14px;
+        background:#1a1a2e;
+        touch-action:none;
+    }
+    #gameOver {
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform:translate(-50%,-50%);
+        background:rgba(0,0,0,0.9);
+        color:white;
+        padding:20px 40px;
+        border-radius:12px;
+        display:none;
+        text-align:center;
+    }
+    #gameOver h2 {
+        font-size:40px;
+    }
+    button {
+        margin-top:15px;
+        padding:12px 35px;
+        font-size:20px;
+        background:#667eea;
+        border:none;
+        border-radius:10px;
+        color:white;
+        cursor:pointer;
+    }
+</style>
 </head>
+
 <body>
-    <div id="gameContainer">
-        <div id="score">Score: 0</div>
-        <canvas id="gameCanvas"></canvas>
-    </div>
-    <div id="gameOver">
-        <h2>Game Over!</h2>
-        <p id="finalScore"></p>
-        <button onclick="restartGame()">Rejouer</button>
-    </div>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas"></canvas>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 800;
-        canvas.height = 600;
+<div id="gameOver">
+    <h2>Game Over !</h2>
+    <p id="finalScore"></p>
+    <button onclick="restartGame()">Rejouer</button>
+</div>
 
-        let score = 0;
-        let gameRunning = true;
-        let particles = [];
+<script>
 
-        // Paddle
-        const paddle = {
-            x: canvas.width / 2 - 60,
-            y: canvas.height - 30,
-            width: 120,
-            height: 15,
-            speed: 8,
-            dx: 0
-        };
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-        // Ball
-        function getRandomDirection() {
-            const angle = (Math.random() * 60 + 60) * (Math.PI / 180); // Angle entre 60° et 120°
-            const direction = Math.random() < 0.5 ? 1 : -1; // Gauche ou droite aléatoire
-            return {
-                dx: Math.cos(angle) * 5 * direction,
-                dy: -Math.abs(Math.sin(angle) * 5)
-            };
-        }
-        
-        const initialDirection = getRandomDirection();
-        const ball = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            radius: 8,
-            speed: 5,
-            dx: initialDirection.dx,
-            dy: initialDirection.dy
-        };
+let score = 0;
+let gameRunning = true;
+let particles = [];
 
-        // Bricks
-        const brick = {
-            rows: 6,
-            cols: 10,
-            width: 70,
-            height: 25,
-            padding: 10,
-            offsetX: 35,
-            offsetY: 60
-        };
+// ✅ Responsive canvas
+function resizeGame() {
+    const baseWidth = 800;
+    const baseHeight = 600;
+    const scale = Math.min(window.innerWidth / baseWidth, window.innerHeight / baseHeight);
 
-        let bricks = [];
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
+    canvas.width = baseWidth * scale;
+    canvas.height = baseHeight * scale;
+}
+resizeGame();
+window.addEventListener("resize", resizeGame);
 
-        function createBricks() {
-            for (let r = 0; r < brick.rows; r++) {
-                bricks[r] = [];
-                for (let c = 0; c < brick.cols; c++) {
-                    bricks[r][c] = {
-                        x: c * (brick.width + brick.padding) + brick.offsetX,
-                        y: r * (brick.height + brick.padding) + brick.offsetY,
-                        width: brick.width,
-                        height: brick.height,
-                        visible: true,
-                        color: colors[r % colors.length]
-                    };
-                }
+
+const isMobile = window.innerWidth < 900;
+
+// ✅ Raquette
+const paddle = {
+    width: 120,
+    height: 15,
+    x: canvas.width/2 - 60,
+    y: canvas.height - 40,
+    speed: isMobile ? 14 : 9,
+    dx: 0
+};
+
+// ✅ Balle
+function randomBallDirection() {
+    const ang = (Math.random() * 60 + 60) * Math.PI / 180;
+    const d = Math.random() < 0.5 ? 1 : -1;
+    return {
+        dx: Math.cos(ang) * (isMobile ? 8 : 5) * d,
+        dy: -Math.abs(Math.sin(ang) * (isMobile ? 8 : 5))
+    };
+}
+
+const ball = {
+    x: canvas.width/2,
+    y: canvas.height/2,
+    radius: 8,
+    dx: randomBallDirection().dx,
+    dy: randomBallDirection().dy
+};
+
+// ✅ Briques
+const brickConfig = {
+    rows: 6,
+    cols: 10,
+    width: 70,
+    height: 25,
+    padding: 10,
+    offsetX: 35,
+    offsetY: 60
+};
+
+let bricks = [];
+const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#FFA07A','#98D8C8','#F7DC6F'];
+
+function createBricks() {
+    bricks = [];
+    for (let r=0; r<brickConfig.rows; r++) {
+        bricks[r] = [];
+        for (let c=0; c<brickConfig.cols; c++) {
+            bricks[r][c] = {
+                x: c*(brickConfig.width+brickConfig.padding)+brickConfig.offsetX,
+                y: r*(brickConfig.height+brickConfig.padding)+brickConfig.offsetY,
+                visible:true,
+                color:colors[r%colors.length]
             }
         }
+    }
+}
 
-        // Particle system
-        class Particle {
-            constructor(x, y, color) {
-                this.x = x;
-                this.y = y;
-                this.size = Math.random() * 5 + 2;
-                this.speedX = (Math.random() - 0.5) * 8;
-                this.speedY = (Math.random() - 0.5) * 8;
-                this.color = color;
-                this.life = 1;
+// ✅ Déplacement balle
+function moveBall() {
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    if (ball.x-ball.radius < 0 || ball.x+ball.radius > canvas.width)
+        ball.dx *= -1;
+
+    if (ball.y-ball.radius < 0)
+        ball.dy *= -1;
+
+    if (ball.y+ball.radius > canvas.height) {
+        gameRunning=false;
+        document.getElementById("gameOver").style.display="block";
+        document.getElementById("finalScore").textContent=`Score Final : ${score}`;
+    }
+
+    // ✅ Collision raquette
+    if (ball.y+ball.radius > paddle.y &&
+        ball.x > paddle.x && ball.x < paddle.x+paddle.width) {
+
+        ball.dy = -Math.abs(ball.dy);
+        let hitPos = (ball.x-paddle.x)/paddle.width;
+        ball.dx = (hitPos-0.5)* (isMobile ? 18 : 14);
+    }
+
+    // ✅ Collision briques
+    bricks.forEach(row=>{
+        row.forEach(b=>{
+            if(b.visible && ball.x+ball.radius>b.x && ball.x-ball.radius<b.x+brickConfig.width &&
+               ball.y+ball.radius>b.y && ball.y-ball.radius<b.y+brickConfig.height) {
+                    b.visible=false;
+                    score+=10;
+                    document.getElementById("score").textContent=`Score: ${score}`;
+                    ball.dy *= -1;
             }
+        });
+    });
+}
 
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                this.life -= 0.02;
-                this.size *= 0.97;
+// ✅ Déplacement raquette
+function movePaddle() {
+    paddle.x += paddle.dx;
+    if(paddle.x<0) paddle.x=0;
+    if(paddle.x+paddle.width>canvas.width) paddle.x=canvas.width-paddle.width;
+}
+
+// ✅ Affichage
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // bricks
+    bricks.forEach(row=>{
+        row.forEach(b=>{
+            if(b.visible){
+                ctx.fillStyle=b.color;
+                ctx.fillRect(b.x,b.y,brickConfig.width,brickConfig.height);
             }
+        });
+    });
 
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = this.life;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-        }
+    // paddle
+    ctx.fillStyle="#00ff88";
+    ctx.fillRect(paddle.x,paddle.y,paddle.width,paddle.height);
 
-        function createParticles(x, y, color, count = 15) {
-            for (let i = 0; i < count; i++) {
-                particles.push(new Particle(x, y, color));
-            }
-        }
+    // ball
+    ctx.beginPath();
+    ctx.fillStyle="#fff";
+    ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2);
+    ctx.fill();
+}
 
-        function drawPaddle() {
-            ctx.save();
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#00ff88';
-            const gradient = ctx.createLinearGradient(paddle.x, paddle.y, paddle.x + paddle.width, paddle.y);
-            gradient.addColorStop(0, '#00ff88');
-            gradient.addColorStop(1, '#00d4ff');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
-            ctx.restore();
-        }
+function update() {
+    if(!gameRunning) return;
+    movePaddle();
+    moveBall();
+    draw();
+    requestAnimationFrame(update);
+}
 
-        function drawBall() {
-            ctx.save();
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#fff';
-            const gradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ball.radius);
-            gradient.addColorStop(0, '#ffffff');
-            gradient.addColorStop(1, '#00d4ff');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        }
+// ✅ Clavier pour PC
+document.addEventListener("keydown", e=>{
+    if(e.key==="ArrowRight"||e.key==="d") paddle.dx = paddle.speed;
+    if(e.key==="ArrowLeft"||e.key==="q") paddle.dx = -paddle.speed;
+});
+document.addEventListener("keyup", ()=> paddle.dx = 0);
 
-        function drawBricks() {
-            bricks.forEach(row => {
-                row.forEach(b => {
-                    if (b.visible) {
-                        ctx.save();
-                        ctx.shadowBlur = 10;
-                        ctx.shadowColor = b.color;
-                        ctx.fillStyle = b.color;
-                        ctx.fillRect(b.x, b.y, b.width, b.height);
-                        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(b.x, b.y, b.width, b.height);
-                        ctx.restore();
-                    }
-                });
-            });
-        }
+// ✅ Touch Mobile
+function handleTouch(e){
+    e.preventDefault();
+    const rect=canvas.getBoundingClientRect();
+    const touch=e.touches[0]||e.changedTouches[0];
+    const x=(touch.clientX-rect.left)*(canvas.width/rect.width);
+    paddle.x=x-paddle.width/2;
+}
+document.addEventListener("touchstart",handleTouch,{passive:false});
+document.addEventListener("touchmove",handleTouch,{passive:false});
 
-        function movePaddle() {
-            paddle.x += paddle.dx;
-            if (paddle.x < 0) paddle.x = 0;
-            if (paddle.x + paddle.width > canvas.width) paddle.x = canvas.width - paddle.width;
-        }
+// ✅ Restart
+function restartGame(){
+    score=0;
+    gameRunning=true;
+    document.getElementById("score").textContent="Score: 0";
+    document.getElementById("gameOver").style.display="none";
+    paddle.x=canvas.width/2-60;
+    ball.x=canvas.width/2;
+    ball.y=canvas.height/2;
+    const d=randomBallDirection();
+    ball.dx=d.dx;
+    ball.dy=d.dy;
+    createBricks();
+    update();
+}
 
-        function moveBall() {
-            ball.x += ball.dx;
-            ball.y += ball.dy;
+createBricks();
+update();
 
-            // Wall collision
-            if (ball.x + ball.radius > canvas.width || ball.x - ball.radius < 0) {
-                ball.dx *= -1;
-                createParticles(ball.x, ball.y, '#00d4ff', 8);
-            }
-            if (ball.y - ball.radius < 0) {
-                ball.dy *= -1;
-                createParticles(ball.x, ball.y, '#00d4ff', 8);
-            }
-
-            // Paddle collision
-            if (ball.y + ball.radius > paddle.y &&
-                ball.x > paddle.x &&
-                ball.x < paddle.x + paddle.width) {
-                ball.dy = -Math.abs(ball.dy);
-                let hitPos = (ball.x - paddle.x) / paddle.width;
-                ball.dx = (hitPos - 0.5) * 10;
-                createParticles(ball.x, ball.y, '#00ff88', 12);
-            }
-
-            // Game over
-            if (ball.y + ball.radius > canvas.height) {
-                gameRunning = false;
-                document.getElementById('gameOver').style.display = 'block';
-                document.getElementById('finalScore').textContent = `Score Final: ${score}`;
-            }
-
-            // Brick collision
-            bricks.forEach(row => {
-                row.forEach(b => {
-                    if (b.visible) {
-                        if (ball.x + ball.radius > b.x &&
-                            ball.x - ball.radius < b.x + b.width &&
-                            ball.y + ball.radius > b.y &&
-                            ball.y - ball.radius < b.y + b.height) {
-                            ball.dy *= -1;
-                            b.visible = false;
-                            score += 10;
-                            document.getElementById('score').textContent = `Score: ${score}`;
-                            createParticles(b.x + b.width / 2, b.y + b.height / 2, b.color, 20);
-                        }
-                    }
-                });
-            });
-        }
-
-        function updateParticles() {
-            particles = particles.filter(p => p.life > 0);
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawBricks();
-            drawPaddle();
-            drawBall();
-            updateParticles();
-        }
-
-        function update() {
-            if (!gameRunning) return;
-            movePaddle();
-            moveBall();
-            draw();
-            requestAnimationFrame(update);
-        }
-
-        function keyDown(e) {
-            if (e.key === 'ArrowRight' || e.key === 'd') paddle.dx = paddle.speed;
-            if (e.key === 'ArrowLeft' || e.key === 'q') paddle.dx = -paddle.speed;
-        }
-
-        function keyUp(e) {
-            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'd' || e.key === 'q') {
-                paddle.dx = 0;
-            }
-        }
-
-        function restartGame() {
-            score = 0;
-            gameRunning = true;
-            document.getElementById('score').textContent = 'Score: 0';
-            document.getElementById('gameOver').style.display = 'none';
-            ball.x = canvas.width / 2;
-            ball.y = canvas.height / 2;
-            
-            // Direction aléatoire au restart
-            const newDirection = getRandomDirection();
-            ball.dx = newDirection.dx;
-            ball.dy = newDirection.dy;
-            
-            paddle.x = canvas.width / 2 - 60;
-            particles = [];
-            createBricks();
-            update();
-        }
-
-        // Touch controls for mobile
-       document.addEventListener('touchstart', handleTouch, { passive: false });
-document.addEventListener('touchmove', handleTouch, { passive: false });
-
-        
-        function handleTouch(e) {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0] || e.changedTouches[0];
-const touchX = touch.clientX - rect.left;
-
-            const scaleX = canvas.width / rect.width;
-            const canvasX = touchX * scaleX;
-            
-            // Move paddle directly to touch position
-            paddle.x = canvasX - paddle.width / 2;
-            
-            // Keep paddle within bounds
-            if (paddle.x < 0) paddle.x = 0;
-            if (paddle.x + paddle.width > canvas.width) {
-                paddle.x = canvas.width - paddle.width;
-            }
-        }
-
-        document.addEventListener('keydown', keyDown);
-        document.addEventListener('keyup', keyUp);
-
-        createBricks();
-        update();
-    </script>
+</script>
 </body>
 </html>
